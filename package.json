@@ -16,6 +16,6 @@
     "good-squeeze": "^4.0.0",
     "hapi": "^13.5.0",
     "inert": "^4.0.1",
-    "node-twitter-api": "^1.7.4"
+    "oauth": "^0.9.14"
   }
 }

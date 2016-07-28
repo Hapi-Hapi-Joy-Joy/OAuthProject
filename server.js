@@ -3,13 +3,18 @@ const hapi = require('hapi')
 const env = require('env2')('./config.env');
 const querystring = require('querystring') //format params for queries
 const {buildUrl, httpsRequest} = require('./utilities')
-const twitterAPI = require('node-twitter-api');
 
-let twitter = new twitterAPI({
-    consumerKey: process.env.TWITTER_CLIENT,
-    consumerSecret: process.env.CLIENT_SECRET,
-    callback: process.env.REDIRECT_URI
-})
+var OAuth = require('oauth').OAuth
+
+const oauth = new OAuth(
+  'https://api.twitter.com/oauth/request_token',
+  'https://api.twitter.com/oauth/access_token',
+  process.env.TWITTER_CLIENT_ID,
+  process.env.CLIENT_SECRET,
+  '1.0',
+  'http://localhost:3000/tokenised',
+  'HMAC-SHA1'
+)
 
 const server = new hapi.Server()
 server.connection({
@@ -23,43 +28,30 @@ server.route({
   method:'GET',
   path:'/',
   handler:(req,reply)=>{
-    twitter.getRequestToken(function(error, requestToken, requestTokenSecret, results){
-    if (error) {
-        console.log('Error getting OAuth request token : ' + String(error));
-        for(var i in error) console.log(error[i])
-    } else {
-        //store token and tokenSecret somewhere, you'll need them later; redirect user 
-      
-        console.log(results)
-    }
-});reply.file('./login.html') 
+    reply.file('./login.html') 
   }
 })
 server.route({
   method:'GET',
   path:'/dologin',
   handler:(req,reply)=>{
-    reply.redirect(buildUrl())    }
+    oauth.getOAuthRequestToken(function(error, oauth_token, oauth_token_secret, results) {
+      if (error) {
+        console.log(error);
+        reply(error)
+      }
+      else {
+        reply.redirect('https://twitter.com/oauth/authenticate?oauth_token='+oauth_token)
+      }
+    }) 
+  }
 })
 server.route({
   method:'GET',
-  path:'/tokenized',
+  path:'/tokenised',
   handler:(req,reply)=>{
-    httpsRequest({
-      hostname:'',
-      port: 443,
-      method:'POST',
-      path: '/login/oauth/access_token',
-      headers:{
-        'Accept':'application/json'
-      },
-      body: querystring.stringify({
-        client_id: process.env.TWITTER_CLIENT_ID,
-        client_secret: process.env.CLIENT_SECRET, 
-        code: req.query.code
-      }) 
-    },()=>{})
-  }
+    console.log(req)
+  reply.file('./logged.html')}
 })
 
 server.start(()=>{
