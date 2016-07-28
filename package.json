@@ -2,9 +2,9 @@
   "name": "apiapp",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon server.js"
   },
   "author": "",
   "license": "ISC",
@@ -16,5 +16,8 @@
     "good-squeeze": "^4.0.0",
     "hapi": "^13.5.0",
     "inert": "^4.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.10.0"
   }
 }
