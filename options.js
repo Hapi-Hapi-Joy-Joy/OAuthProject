@@ -1,6 +1,5 @@
 'use strict'
-module.exports = () => {
-  return {
+module.exports = {
     ops: {
       interval: 1000
     },
@@ -26,6 +25,5 @@ module.exports = () => {
       }]
     }
   }
-}
 
 
