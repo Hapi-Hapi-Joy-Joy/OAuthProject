@@ -2,51 +2,90 @@
 const hapi = require('hapi')
 const env = require('env2')('./config.env');
 const querystring = require('querystring') //format params for queries
-
-
-const goodOptions = {
-    ops: {
-        interval: 1000
-    },
-    reporters: {
-        console: [{
-            module: 'good-squeeze',
-            name: 'Squeeze',
-            args: [{ log: '*', response: '*' }]
-        }, {
-            module: 'good-console'
-        }, 'stdout'],
-        http: [{
-            module: 'good-squeeze',
-            name: 'Squeeze',
-            args: [{ error: '*' }]
-        }, {
-            module: 'good-http',
-            args: ['http://prod.logs:3000', {
-                wreck: {
-                    headers: { 'x-api-key': 12345 }
-                }
-            }]
-        }]
-    }
-};
+const {buildUrl, httpsRequest, nonce, generateSignature} = require('./utilities')
 
 const server = new hapi.Server()
 server.connection({
   port: 3000
 })
 server.register([
-  require('inert'), { register: require('good'), options: goodOptions }
+  require('inert'), { register: require('good'), options: require('./options')() }
 ],()=>{})
+  server.route({
+    method:'GET',
+    path:'/',
+    handler:(req,reply)=>{
+      reply.file('./login.html') 
+    }
+  })
+  server.route({
+    method:'GET',
+    path:'/login',
+    handler:(req,reply)=>{
+     console.log(generateSignature(options)) 
+      reply.file('./login.html')}
+  })
+  server.route({
+    method:'GET',
+    path:'/dologin',
+    handler:(req,reply)=>{
+      httpsRequest({
+        hostname:'api.twitter.com',
+        port: 443,
+        method:'POST',
+        path: '/oauth/request_token',
+        headers:{
+          oauth_consumer_key:process.env.TWITTER_CLIENT_ID,
+          oauth_callback:process.env.REDIRECT_URI,
+          oauth_nonce:nonce(32),// generate nonce,
+          oauth_signature_method:'HMAC-SHA1',
+          oauth_timestamp: Date.now(),
+          oauth_signature: generateSignature(options),// signature
+          oauth_versionL:1.0
+        }
+      },(res)=>{console.log(res)}) 
+      } 
+    })
+  server.route({
+    method:'GET',
+    path:'/tokenized',
+    handler:(req,reply)=>{
+      server.log('info',req)
+      httpsRequest({
+        hostname:'',
+        port: 443,
+        method:'POST',
+        path: '/login/oauth/access_token',
+        headers:{
+          'Accept':'application/json'
+        },
+        body: querystring.stringify({
+          client_id: process.env.TWITTER_CLIENT_ID,
+          client_secret: process.env.CLIENT_SECRET, 
+          code: req.query.code
+        }) 
+      },()=>{})
+    }
+  })
 
-server.route({
-  method:'GET',
-  path:'/',
-  handler:(req,reply)=>{
-    reply.file('./login.html') 
+  server.start(()=>{
+    console.log('server is running on port:', server.info.port)
+  })
+  //for testing
+const options = {
+  hostname:'api.twitter.com/',
+  port: 443,
+  method:'POST',
+  path: '/oauth/request_token',
+  headers:{
+    'oauth_consumer_key':process.env.TWITTER_CLIENT_ID,
+    'oauth_callback':process.env.REDIRECT_URI,
+    'oauth_nonce':nonce(32),// generate nonce,
+    'oauth_signature_method':'HMAC-SHA1',
+    'oauth_timestamp': Date.now(),
+    'oauth_signature': 'placeholder',// signature
+    'oauth_versionL':1.0
   }
-})
-server.start(()=>{
-console.log('server is running on port:', server.info.port)
-})
+}
+
 
