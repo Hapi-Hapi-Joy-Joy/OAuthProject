@@ -4,6 +4,8 @@ const env = require('env2')('./config.env');
 const querystring = require('querystring') //format params for queries
 const {buildUrl, httpsRequest} = require('./utilities')
 
+const db = {}
+
 var OAuth = require('oauth').OAuth
 
 const oauth = new OAuth(
@@ -23,11 +25,12 @@ server.connection({
 server.register([
   require('inert'), { register: require('good'), options: require('./options')() }
 ],()=>{})
+
 server.state('session', {
-    ttl: 24 * 60 * 60 * 1000,     // One day
-    isSecure: true,
-    path: '/',
-    encoding: 'base64json'
+  ttl: 24 * 60 * 60 * 1000,     // One day
+  isSecure: false,
+  path: '/',
+  encoding: 'iron'
 })
 
 
@@ -35,7 +38,7 @@ server.route({
   method:'GET',
   path:'/',
   handler:(req,reply)=>{
-    reply.file('./login.html') 
+    reply.file('./login.html')
   }
 })
 server.route({
@@ -44,42 +47,71 @@ server.route({
   handler:(req,reply)=>{
     oauth.getOAuthRequestToken(function(error, oauth_token, oauth_token_secret, results) {
       if (error) {
-        console.log(error);
         reply(error)
       }
       else {
-        reply.redirect('https://twitter.com/oauth/authenticate?oauth_token='+oauth_token)
+        server.app.oauth= {
+          oauth_token:{
+            token_secret: oauth_token_secret
+          }
+        }
+        reply.redirect('https://twitter.com/oauth/authenticate?oauth_token=' + oauth_token)
       }
-    }) 
+    })
   }
 })
 server.route({
   method:'GET',
   path:'/tokenised',
+  config: {
+    state: {
+      parse: true,
+      failAction: 'log'
+    }
+  },
   handler:(req,reply)=>{
-    console.log('try to log credentials',req.auth.credentials)
-    /*let session = req.state.session*/
-    //if(!session) {
-      //session = {
+    oauth.getOAuthAccessToken(
+      req.query.oauth_token,
+      server.app.oauth.oauth_token.token_secret,
+      req.query.oauth_verifier,
 
-        //oauth_token: req.params.oauth_token,
-        //oauth_verifier: req.params.oauth_verifier 
-      //} 
-    /*}*/
-    console.log(req.params)
-    reply.file('./logged.html')}
+      function(error, oauth_access_token, oauth_access_token_secret, results) {
+        if (error) {
+          console.log(error);
+          reply("Authentication Failure!")
+        }
+        else {
+          console.log('done ',results)
+          if (!db[oauth_access_token]) {
+            db[oauth_access_token] = {
+              screen_name: results.screen_name,
+              id: results.user_id,
+              oauth_access_token: oauth_access_token
+            }
+          }
+          console.log('logging the database: ', db);
+          console.log(db[oauth_access_token])
+          reply
+            .file('./logged.html')
+            .state('session', JSON.stringify(db[oauth_access_token]))
+      }
+  })
+}
 })
-
+server.route({
+  method: 'GET',
+  path: '/cookieTest',
+  handler: (req, reply) => {
+    const session = req.state.session
+    if (session) {
+      if(req.state.session.screen_name === db[req.state.session.oauth_access_token].screen_name
+         && req.state.session.id === db[req.state.session.oauth_access_token].id)
+      reply(`cookie: ${session}`)
+    } else {
+      reply.redirect('/');
+    }
+  }
+})
 server.start(()=>{
   console.log('server is running on port:', server.info.port)
 })
-
-
-//const db = {
-  //mattia:{
-    //id:1
-  //},
-  //bradley:{
-    //id:2
-  //}
-/*}*/
