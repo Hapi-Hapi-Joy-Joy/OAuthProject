@@ -1,20 +1,11 @@
 'use strict'
 const hapi = require('hapi')
 const env = require('env2')('./config.env');
-const OAuth = require('oauth').OAuth
+const db = require('./db')
+const handlers = require('./handlers.js')
+const {oauth,encrypt,decrypt} = require('./utils')
 
-const db = {}
 
-
-const oauth = new OAuth(
-  'https://api.twitter.com/oauth/request_token',
-  'https://api.twitter.com/oauth/access_token',
-  process.env.TWITTER_CLIENT_ID,
-  process.env.CLIENT_SECRET,
-  '1.0',
-  'http://localhost:3000/tokenised',
-  'HMAC-SHA1'
-)
 
 const server = new hapi.Server()
 server.connection({
@@ -69,28 +60,29 @@ server.route({
           reply("Authentication Failure!")
         }
         else {
-          if (!db[oauth_access_token]) {
-            db[oauth_access_token] = {
+          if (!db[results.user_id]) {
+            db[results.user_id] = {
               screen_name: results.screen_name,
               id: results.user_id,
-              oauth_access_token: oauth_access_token
+              oauth_access_token: oauth_access_token,
             }
           }
           reply
             .file('./logged.html')
-            .state('session', db[oauth_access_token])
-        }
-      })
-  }
+            .state('session', {
+              user_id:encrypt(db[results.user_id].id),
+            })
+        }})
+      }
 })
+
 server.route({
   method: 'GET',
   path: '/cookieTest',
   handler: (req, reply) => {
     const session = req.state.session
     if (session) {
-      if(session.screen_name === db[session.oauth_access_token].screen_name
-         && session.id === db[session.oauth_access_token].id) {
+      if(db[decrypt(session.user_id)]) {
         reply(`cookie: ${session}`)
       }
     } else {
