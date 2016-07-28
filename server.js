@@ -1,19 +1,25 @@
 'use strict'
 const hapi = require('hapi')
 const env = require('env2')('./config.env');
-const db = require('./db')
-const handlers = require('./handlers.js')
-const {oauth,encrypt,decrypt} = require('./utils')
+const { oauth, encrypt, decrypt } = require('./src/utils')(require('crypto'), require('oauth').OAuth)
+const path = require('path');
 
-
-
-const server = new hapi.Server()
-server.connection({
-  port: 3000
+const server = new hapi.Server({
+  connections: {
+    routes: {
+      files: {
+        relativeTo: path.join(__dirname, 'public')
+      }
+    }
+  }
 })
 
+server.connection({ port: 3000 })
+
+const handlers = require('./src/handlers.js')( oauth, server, encrypt, decrypt )
+
 server.register([
-  require('inert'), { register: require('good'), options: require('./options') }
+  require('inert'), { register: require('good'), options: require('./src/options') }
 ],()=>{})
 
 server.state('session', {
@@ -34,62 +40,35 @@ server.route({
 server.route({
   method:'GET',
   path:'/dologin',
-  handler:(req,reply)=>{
-    oauth.getOAuthRequestToken((error, oauth_token, oauth_token_secret, results) => {
-      if (error){ reply(error) }
-      else{ 
-        server.app[oauth_token] = oauth_token_secret
-        reply.redirect('https://twitter.com/oauth/authenticate?oauth_token=' + oauth_token) 
-      } 
-    })
-  }
+  handler: handlers.doLogin
 })
 
 server.route({
   method:'GET',
   path:'/tokenised',
-  handler:(req,reply)=>{
-    oauth.getOAuthAccessToken(
-      req.query.oauth_token,
-      server.app[req.query.oauth_token],
-      req.query.oauth_verifier,
-
-      (error, oauth_access_token, oauth_access_token_secret, results) => {
-        if (error) {
-          console.log(error);
-          reply("Authentication Failure!")
-        }
-        else {
-          if (!db[results.user_id]) {
-            db[results.user_id] = {
-              screen_name: results.screen_name,
-              id: results.user_id,
-              oauth_access_token: oauth_access_token,
-            }
-          }
-          reply
-            .file('./logged.html')
-            .state('session', {
-              user_id:encrypt(db[results.user_id].id),
-            })
-        }})
-      }
+  handler: handlers.tokenised
 })
 
 server.route({
   method: 'GET',
   path: '/cookieTest',
-  handler: (req, reply) => {
-    const session = req.state.session
-    if (session) {
-      if(db[decrypt(session.user_id)]) {
-        reply(`cookie: ${session}`)
-      }
-    } else {
-      reply.redirect('/');
-    }
+  handler:handlers.cookieTest 
+})
+
+
+server.route({
+  method:'GET',
+  path: '/{stuff*}',
+  handler: {
+    directory:{
+      path:'public',
+      listing:true
+    } 
+
   }
 })
 server.start(()=>{
   console.log('server is running on port:', server.info.port)
 })
+
+
