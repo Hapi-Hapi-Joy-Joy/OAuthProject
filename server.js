@@ -30,7 +30,7 @@ server.state('session', {
   ttl: 24 * 60 * 60 * 1000,     // One day
   isSecure: false,
   path: '/',
-  encoding: 'iron'
+  encoding: 'base64json'
 })
 
 
@@ -93,7 +93,7 @@ server.route({
           console.log(db[oauth_access_token])
           reply
             .file('./logged.html')
-            .state('session', JSON.stringify(db[oauth_access_token]))
+            .state('session', db[oauth_access_token])
       }
   })
 }
@@ -105,8 +105,9 @@ server.route({
     const session = req.state.session
     if (session) {
       if(req.state.session.screen_name === db[req.state.session.oauth_access_token].screen_name
-         && req.state.session.id === db[req.state.session.oauth_access_token].id)
+         && req.state.session.id === db[req.state.session.oauth_access_token].id) {
       reply(`cookie: ${session}`)
+      }
     } else {
       reply.redirect('/');
     }
