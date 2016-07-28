@@ -3,6 +3,13 @@ const hapi = require('hapi')
 const env = require('env2')('./config.env');
 const querystring = require('querystring') //format params for queries
 const {buildUrl, httpsRequest} = require('./utilities')
+const twitterAPI = require('node-twitter-api');
+
+let twitter = new twitterAPI({
+    consumerKey: process.env.TWITTER_CLIENT,
+    consumerSecret: process.env.CLIENT_SECRET,
+    callback: process.env.REDIRECT_URI
+})
 
 const server = new hapi.Server()
 server.connection({
@@ -16,7 +23,16 @@ server.route({
   method:'GET',
   path:'/',
   handler:(req,reply)=>{
-    reply.file('./login.html') 
+    twitter.getRequestToken(function(error, requestToken, requestTokenSecret, results){
+    if (error) {
+        console.log('Error getting OAuth request token : ' + String(error));
+        for(var i in error) console.log(error[i])
+    } else {
+        //store token and tokenSecret somewhere, you'll need them later; redirect user 
+      
+        console.log(results)
+    }
+});reply.file('./login.html') 
   }
 })
 server.route({
