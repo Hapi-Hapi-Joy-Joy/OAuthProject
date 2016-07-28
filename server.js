@@ -23,6 +23,13 @@ server.connection({
 server.register([
   require('inert'), { register: require('good'), options: require('./options')() }
 ],()=>{})
+server.state('session', {
+    ttl: 24 * 60 * 60 * 1000,     // One day
+    isSecure: true,
+    path: '/',
+    encoding: 'base64json'
+})
+
 
 server.route({
   method:'GET',
@@ -50,11 +57,29 @@ server.route({
   method:'GET',
   path:'/tokenised',
   handler:(req,reply)=>{
-    console.log(req)
-  reply.file('./logged.html')}
+    console.log('try to log credentials',req.auth.credentials)
+    /*let session = req.state.session*/
+    //if(!session) {
+      //session = {
+
+        //oauth_token: req.params.oauth_token,
+        //oauth_verifier: req.params.oauth_verifier 
+      //} 
+    /*}*/
+    console.log(req.params)
+    reply.file('./logged.html')}
 })
 
 server.start(()=>{
   console.log('server is running on port:', server.info.port)
 })
 
+
+//const db = {
+  //mattia:{
+    //id:1
+  //},
+  //bradley:{
+    //id:2
+  //}
+/*}*/
