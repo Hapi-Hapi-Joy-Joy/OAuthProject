@@ -28,27 +28,6 @@ Data is saved in an object and in the server cache.
 
 ##Quick Start Guide:
 
-Clone this repo, and then ```npm install```. There are some separate branches **Twitwork** and **googleoauth** that we created alongside our main project in an attempt to get it all working - PLEASE DO NOT MERGE THEM. They will crash and break everything and we will be very sad. 
+Clone this repo, and then ```npm install```. There are some separate branches **Twitwork** and **googleoauth** that we created alongside our main project in an attempt to get it all working - PLEASE DO NOT MERGE THEM. They will crash and break everything and we will be very sad.
 
-```npm start``` runs our project on Localhost:3000, and to check that a cookie is being registered, after you have run the project through to the ```/tokenised```, remove the data in the url and replace it with ```/cookieTest``` following the Localhost:3000.
-
-##Endpoints:
-
-
-###/login
-
-this is the login page. It should have a button to click, at some point, to begin authentication with twitter
-
-###/dologin   
-
-this launches athentication through twitter
-
-###/cookieTest
-
-Once authenticated, try this url to see if cookies are working. An object will be displayed.
-If you re not authenticated you will be redirected to login page
-
-
-#####Frontend
-
-work in progress
+```npm start``` runs our project on Localhost:3000, click through to sign in to Twitter.  You will then be redirected to a welcome page.
