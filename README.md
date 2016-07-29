@@ -2,6 +2,8 @@
 
 OAuthProject: How Loud is Your Echo Chamber
 
+** This is a work in progress **
+
 ##Goals:
 Third Party Authentication with Twitter.  
 1) Display signed in person's 20 latest tweets
@@ -24,7 +26,11 @@ The cookie content is encrypted.
 
 Data is saved in an object and in the server cache.
 
+##Quick Start Guide:
 
+Clone this repo, and then ```npm install```. There is a separate branch **Twitwork** that we created alongside our main project in an attempt to get it all working. 
+
+```npm start``` runs our project on Localhost:3000, and to check that a cookie is being registered, after you have run the project through to the ```/tokenised```, remove the data in the url and replace it with ```/cookieTest``` following the Localhost:3000.
 
 ##Endpoints:
 
