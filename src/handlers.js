@@ -29,12 +29,22 @@ module.exports = (oauth, server, encrypt, decrypt) => { return {
               id: results.user_id,
               oauth_access_token: oauth_access_token
             }
+
+          const session = req.state.session
+          if (session) {
+              const user = db[decrypt(session.user_id)].screen_name
+              if(user) {
+                reply(`<h1>Hello there, ${user}</h1>`)
+              } else {
+                reply.redirect('/');
+              }
           }
-          reply
-            .file('./logged.html')
-            .state('session', {
-              user_id: encrypt(db[results.user_id].id),
-            })
+          }
+          // reply
+          //   .file('./logged.html')
+          //   .state('session', {
+          //     user_id: encrypt(db[results.user_id].id),
+          //   })
         }})
   },
   cookieTest:(req, reply) => {
@@ -52,7 +62,18 @@ module.exports = (oauth, server, encrypt, decrypt) => { return {
       if (session) {
           const user = db[decrypt(session.user_id)].screen_name
           if(user) {
-            reply(`user: ${user}`)
+            reply(`<h1>Hello there, ${user}</h1>`)
+          } else {
+            reply.redirect('/');
+          }
+      }
+    },
+    getToken:(req, reply) => {
+      const session = req.state.session
+      if (session) {
+          const token = db[decrypt(session.user_id)].oauth_access_token
+          if(user) {
+            reply(`Token: ${token}`)
           } else {
             reply.redirect('/');
           }
