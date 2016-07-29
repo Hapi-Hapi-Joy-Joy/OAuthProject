@@ -4,10 +4,10 @@ module.exports = (oauth, server, encrypt, decrypt) => { return {
   doLogin:(req,reply)=>{
     oauth.getOAuthRequestToken((error, oauth_token, oauth_token_secret, results) => {
       if (error){ reply(error) }
-      else{ 
+      else{
         server.app[oauth_token] = oauth_token_secret
-        reply.redirect('https://twitter.com/oauth/authenticate?oauth_token=' + oauth_token) 
-      } 
+        reply.redirect('https://twitter.com/oauth/authenticate?oauth_token=' + oauth_token)
+      }
     })
   },
 
@@ -46,8 +46,16 @@ module.exports = (oauth, server, encrypt, decrypt) => { return {
           } else {
                 reply.redirect('/');
               }
+    },
+    getUser:(req, reply) => {
+      const session = req.state.session
+      if (session) {
+          const user = db[decrypt(session.user_id)].screen_name
+          if(user) {
+            reply(`user: ${user}`)
+          } else {
+            reply.redirect('/');
+          }
+      }
     }
 }}
-
-
-

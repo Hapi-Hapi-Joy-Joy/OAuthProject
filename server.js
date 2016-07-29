@@ -52,7 +52,13 @@ server.route({
 server.route({
   method: 'GET',
   path: '/cookieTest',
-  handler:handlers.cookieTest 
+  handler:handlers.cookieTest
+})
+
+server.route({
+  method: 'GET',
+  path: '/twituser',
+  handler: handlers.getUser
 })
 
 
@@ -63,12 +69,10 @@ server.route({
     directory:{
       path:'public',
       listing:true
-    } 
+    }
 
   }
 })
 server.start(()=>{
   console.log('server is running on port:', server.info.port)
 })
-
-
