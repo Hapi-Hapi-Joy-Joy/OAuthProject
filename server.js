@@ -71,23 +71,6 @@ server.route({
   handler: handlers.tokenised
 })
 
-server.route({
-  method: 'GET',
-  path: '/cookieTest',
-  handler:handlers.cookieTest
-})
-
-server.route({
-  method: 'GET',
-  path: '/twituser',
-  handler: handlers.getUser
-})
-
-server.route({
-  method: 'GET',
-  path: '/gettok',
-  handler: handlers.getToken
-})
 
 server.route({
   method:'GET',
