@@ -86,7 +86,6 @@ server.route({
 server.route({
   method: 'GET',
   path: '/gettok',
-  // handler: handlers.gethaiku
   handler: handlers.getToken
 })
 
