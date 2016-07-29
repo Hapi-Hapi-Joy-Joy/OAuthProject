@@ -57,5 +57,16 @@ module.exports = (oauth, server, encrypt, decrypt) => { return {
             reply.redirect('/');
           }
       }
+    },
+    getToken:(req, reply) => {
+      const session = req.state.session
+      if (session) {
+          const user = db[decrypt(session.user_id)].oauth_access_token
+          if(user) {
+            reply(`user: ${user}`)
+          } else {
+            reply.redirect('/');
+          }
+      }
     }
 }}
